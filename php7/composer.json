@@ -1,0 +1,12 @@
+{
+    "name": "bugness/sandbox",
+    "type": "project",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "bugness",
+            "email": "bugness@yandex.ru"
+        }
+    ],
+    "require": {}
+}
