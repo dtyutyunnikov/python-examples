@@ -16,6 +16,7 @@
  */
 
 (new class {
+    const SCRIPT_NAME   = 'currency-exchange-rates';
     const TIME_INTERVAL = '30 minutes';
     const DATA_SOURCE   = 'http://www.cbr.ru/scripts/XML_daily.asp';
     const CACHE_FILE    = __DIR__ . DIRECTORY_SEPARATOR . 'data.json';
@@ -118,7 +119,7 @@
      */
     private function log($message, $priority = LOG_NOTICE)
     {
-        openlog("currency-exchange-rates", LOG_PID | LOG_PERROR, LOG_USER);
+        openlog(self::SCRIPT_NAME, LOG_PID | LOG_PERROR, LOG_USER);
         syslog($priority, $message);
         closelog();
     }

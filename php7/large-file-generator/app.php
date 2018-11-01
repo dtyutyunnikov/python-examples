@@ -8,7 +8,7 @@
  * --qty [int]   = Quantity of records
  */
 
-use Faker\{Generator, Factory};
+use Faker\Factory;
 
 require '../vendor/autoload.php';
 
@@ -33,17 +33,20 @@ require '../vendor/autoload.php';
         ];
 
         try {
-            $this->generateFile(Factory::create());
+            $this->generateFile();
         } catch (Exception $e) {
             $this->log($e->getMessage(), LOG_ERR);
         }
     }
 
-    /**
-     * @param Generator $faker
-     */
-    private function generateFile(Generator $faker)
+    private function generateFile()
     {
+        if (!is_writable(self::RESULT_FILE)) {
+            throw new Exception('File "' . self::RESULT_FILE . '" is not writable.');
+        }
+
+        $faker = Factory::create();
+
         $f = fopen(self::RESULT_FILE, 'w');
         for ($i = 0; $i < $this->qty; $i++) {
             $line = '"' . join('","', [
