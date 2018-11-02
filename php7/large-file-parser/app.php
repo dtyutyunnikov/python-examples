@@ -8,13 +8,13 @@
     public function run()
     {
         try {
-            $this->analyze();
+            $this->main();
         } catch (Exception $e) {
             $this->log($e->getMessage(), LOG_ERR);
         }
     }
 
-    private function analyze()
+    private function main()
     {
         $result = [];
 
@@ -28,11 +28,7 @@
             $this->progress($i++);
         }
 
-        if (!is_writable(self::RESULT_FILE)) {
-            throw new Exception('File "' . self::RESULT_FILE . '" is not writable.');
-        }
-        file_put_contents(
-            __DIR__ . '/data.json',
+        (new SplFileObject(self::RESULT_FILE, 'w'))->fwrite(
             str_replace('},{', '},' . PHP_EOL . '{', json_encode($result))
         );
 
@@ -42,18 +38,14 @@
 
     private function readFile()
     {
-        if (!file_exists(self::DATA_SOURCE)) {
-            throw new Exception('File "' . self::DATA_SOURCE . '" doesn\'t exist.');
-        }
-
-        $f = fopen(self::DATA_SOURCE, 'r');
-        while ($userValues = fgetcsv($f)) {
+        $f = new SplFileObject(self::DATA_SOURCE);
+        $f->setFlags(SplFileObject::READ_CSV | SplFileObject::SKIP_EMPTY);
+        while ($values = $f->fgetcsv()) {
             $user = (object) array_combine([
                 'name', 'phone', 'birthday', 'street', 'city', 'state', 'zip'
-            ], $userValues);
+            ], $values);
             yield $user;
         }
-        fclose($f);
     }
 
     /**
