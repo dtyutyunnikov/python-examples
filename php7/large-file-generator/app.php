@@ -9,37 +9,34 @@
  */
 
 use Faker\Factory;
+use Sandbox\AppTrait;
 
 require '../vendor/autoload.php';
 
 (new class {
-    const SCRIPT_NAME      = 'large-file-generator';
+    use AppTrait;
+
     const RESULT_FILE      = __DIR__ . DIRECTORY_SEPARATOR . 'data.csv';
     const PROGRESSBAR_SIZE = 50;
 
-    private $qty = 100;
-
+    private $qty   = 100;
     private $cache = [];
+
+    protected $scriptName = 'large-file-generator';
 
     /**
      * @param array $args
      */
-    public function run(array $args)
+    protected function init($args = [])
     {
         $this->qty   = $args['qty'] ?? 100;
         $this->cache = [
             'progressbar_step' => ceil($this->qty / self::PROGRESSBAR_SIZE),
             'result_size'      => 0,
         ];
-
-        try {
-            $this->generateFile();
-        } catch (Exception $e) {
-            $this->log($e->getMessage(), LOG_ERR);
-        }
     }
 
-    private function generateFile()
+    protected function main()
     {
         if (!is_writable(self::RESULT_FILE)) {
             throw new Exception('File "' . self::RESULT_FILE . '" is not writable.');
@@ -47,7 +44,7 @@ require '../vendor/autoload.php';
 
         $faker = Factory::create();
 
-        $f = fopen(self::RESULT_FILE, 'w');
+        $file = new SplFileObject(self::RESULT_FILE, 'w');
         for ($i = 0; $i < $this->qty; $i++) {
             $line = '"' . join('","', [
                 $faker->name,
@@ -58,11 +55,10 @@ require '../vendor/autoload.php';
                 $faker->stateAbbr,
                 $faker->postcode,
             ]) . '"' . PHP_EOL;
-            fwrite($f, $line);
+            $file->fwrite($line);
             $this->cache['result_size'] += mb_strlen($line);
             $this->progress($i);
         }
-        fclose($f);
         $this->progress($this->qty, true);
     }
 
@@ -105,16 +101,5 @@ require '../vendor/autoload.php';
         $unit = ['B', 'KB', 'MB', 'GB'];
         $exp  = floor(log($bytes, 1000)) | 0;
         return round($bytes / pow(1000, $exp), $precision) . $unit[$exp];
-    }
-
-    /**
-     * @param string $message
-     * @param int $priority (@see LOG_* constants)
-     */
-    private function log($message, $priority = LOG_NOTICE)
-    {
-        openlog(self::SCRIPT_NAME, LOG_PID | LOG_PERROR, LOG_USER);
-        syslog($priority, $message);
-        closelog();
     }
 })->run(getopt('', ['qty:']));
