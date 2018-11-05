@@ -16,13 +16,12 @@ require '../vendor/autoload.php';
 (new class {
     use AppTrait;
 
+    const SCRIPT_NAME      = 'large-file-generator';
     const RESULT_FILE      = __DIR__ . DIRECTORY_SEPARATOR . 'data.csv';
     const PROGRESSBAR_SIZE = 50;
 
     private $qty   = 100;
     private $cache = [];
-
-    protected $scriptName = 'large-file-generator';
 
     /**
      * @param array $args
@@ -46,7 +45,7 @@ require '../vendor/autoload.php';
 
         $file = new SplFileObject(self::RESULT_FILE, 'w');
         for ($i = 0; $i < $this->qty; $i++) {
-            $line = '"' . join('","', [
+            $this->cache['result_size'] += $file->fputcsv([
                 $faker->name,
                 $faker->phoneNumber,
                 $faker->dateTimeThisCentury->format('m/d/Y'),
@@ -54,9 +53,7 @@ require '../vendor/autoload.php';
                 $faker->city,
                 $faker->stateAbbr,
                 $faker->postcode,
-            ]) . '"' . PHP_EOL;
-            $file->fwrite($line);
-            $this->cache['result_size'] += mb_strlen($line);
+            ]);
             $this->progress($i);
         }
         $this->progress($this->qty, true);
@@ -99,7 +96,7 @@ require '../vendor/autoload.php';
     private function formatBytes($bytes, $precision = 2)
     {
         $unit = ['B', 'KB', 'MB', 'GB'];
-        $exp  = floor(log($bytes, 1000)) | 0;
-        return round($bytes / pow(1000, $exp), $precision) . $unit[$exp];
+        $exp  = floor(log($bytes, 1024)) | 0;
+        return round($bytes / pow(1024, $exp), $precision) . $unit[$exp];
     }
 })->run(getopt('', ['qty:']));
